@@ -34,7 +34,7 @@ class HTTPResponse(object):
 
 class HTTPClient(object):
     def get_host_port_path(self,url):
-        # Returns the host and port from the url string.
+        # Returns the host, port and path from the url string.
         parsed_url = urllib.parse.urlparse(url)
         host = parsed_url.hostname
         port = parsed_url.port
@@ -82,13 +82,9 @@ class HTTPClient(object):
     def GET(self, url, args=None):
         host, port, path = self.get_host_port_path(url)
         self.connect(host, port)
-        data = "GET %s HTTP/1.1\r\nHost: %s:%s\r\n\r\n" % (path, host, port)
+        data = "GET %s HTTP/1.1\r\nHost: %s:%s\r\nConnection: close\r\n\r\n" % (path, host, port)
         self.sendall(data)
         response = self.recvall(self.socket)
-        print('========')
-        print("We sent:", data, '\n')
-        print(response)
-        print('========\n')
         # We strip out the code and body, and send as an HTTPResponse.
         code = int(response.split(' ')[1])
         body = response.split('\r\n\r\n')[1]
@@ -107,14 +103,10 @@ class HTTPClient(object):
                 body += '&'
             body = body[:-1]
         content_length = len(body.encode('utf-8'))
-        data = "POST %s HTTP/1.1\r\nHost: %s:%s\r\nContent-Type: application/x-222-form-urlencoded\r\nContent-Length: %s\r\n\r\n" % (path, host, port, content_length)
+        data = "POST %s HTTP/1.1\r\nHost: %s:%s\r\nContent-Type: application/x-222-form-urlencoded\r\nContent-Length: %s\r\nConnection: close\r\n\r\n" % (path, host, port, content_length)
         data += body
         self.sendall(data)
         response = self.recvall(self.socket)
-        print('========')
-        print("We sent:", data, '\n')
-        print(response)
-        print('========\n')
         code = int(response.split(' ')[1])
         body = response.split('\r\n\r\n')[1]
         self.close()
