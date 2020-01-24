@@ -92,12 +92,32 @@ class HTTPClient(object):
         # We strip out the code and body, and send as an HTTPResponse.
         code = int(response.split(' ')[1])
         body = response.split('\r\n\r\n')[1]
-        self.socket.close()
+        self.close()
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
-        code = 500
-        body = ""
+        host, port, path = self.get_host_port_path(url)
+        self.connect(host, port)
+        body = ''
+        if args != None:
+            for key in args:
+                body += key
+                body += '='
+                body += '%s' % args[key].replace(' ', '+')
+                body += '&'
+            body = body[:-1]
+        content_length = len(body.encode('utf-8'))
+        data = "POST %s HTTP/1.1\r\nHost: %s:%s\r\nContent-Type: application/x-222-form-urlencoded\r\nContent-Length: %s\r\n\r\n" % (path, host, port, content_length)
+        data += body
+        self.sendall(data)
+        response = self.recvall(self.socket)
+        print('========')
+        print("We sent:", data, '\n')
+        print(response)
+        print('========\n')
+        code = int(response.split(' ')[1])
+        body = response.split('\r\n\r\n')[1]
+        self.close()
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
