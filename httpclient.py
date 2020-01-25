@@ -92,19 +92,15 @@ class HTTPClient(object):
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
+        # Let's encode the args as a url string, to start
+        if args:
+            body = urllib.parse.urlencode(args)
+        else:
+            body = ''
         host, port, path = self.get_host_port_path(url)
         self.connect(host, port)
-        body = ''
-        if args != None:
-            for key in args:
-                body += key
-                body += '='
-                body += '%s' % args[key].replace(' ', '+')
-                body += '&'
-            body = body[:-1]
         content_length = len(body.encode('utf-8'))
-        data = "POST %s HTTP/1.1\r\nHost: %s:%s\r\nContent-Type: application/x-222-form-urlencoded\r\nContent-Length: %s\r\nConnection: close\r\n\r\n" % (path, host, port, content_length)
-        data += body
+        data = "POST %s HTTP/1.1\r\nHost: %s:%s\r\nContent-Type: application/x-222-form-urlencoded\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s" % (path, host, port, content_length, body)
         self.sendall(data)
         response = self.recvall(self.socket)
         code = int(response.split(' ')[1])
