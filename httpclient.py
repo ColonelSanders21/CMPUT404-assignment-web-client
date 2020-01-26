@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
-# Copyright 2016 Abram Hindle, https://github.com/tywtyw2002, and https://github.com/treedust
+# Copyright 2020 Abram Hindle, https://github.com/tywtyw2002, https://github.com/treedust, Anders Johnson
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,6 +36,11 @@ class HTTPClient(object):
     def get_host_port_path(self,url):
         # Returns the host, port and path from the url string.
         parsed_url = urllib.parse.urlparse(url)
+        if parsed_url.scheme not in ('http', 'https'):
+            # We need to specify the scheme in the URL in order to parse and send it.
+            # We assume that http is requested.
+            url = 'http://' + url
+            return self.get_host_port_path(url)
         host = parsed_url.hostname
         port = parsed_url.port
         path = parsed_url.path
@@ -87,7 +92,8 @@ class HTTPClient(object):
         response = self.recvall(self.socket)
         # We strip out the code and body, and send as an HTTPResponse.
         code = int(response.split(' ')[1])
-        body = response.split('\r\n\r\n')[1]
+        body_start = response.find('\r\n\r\n') + + len('\r\n\r\n')
+        body = response[body_start:]
         self.close()
         return HTTPResponse(code, body)
 
@@ -104,7 +110,8 @@ class HTTPClient(object):
         self.sendall(data)
         response = self.recvall(self.socket)
         code = int(response.split(' ')[1])
-        body = response.split('\r\n\r\n')[1]
+        body_start = response.find('\r\n\r\n') + len('\r\n\r\n')
+        body = response[body_start:]
         self.close()
         return HTTPResponse(code, body)
 
@@ -123,4 +130,4 @@ if __name__ == "__main__":
     elif (len(sys.argv) == 3):
         print(client.command( sys.argv[2], sys.argv[1] ).body)
     else:
-        print(client.command( sys.argv[1] ))
+        print(client.command( sys.argv[1] ).body)
