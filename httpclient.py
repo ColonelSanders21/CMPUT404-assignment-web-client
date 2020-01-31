@@ -58,13 +58,18 @@ class HTTPClient(object):
         return None
 
     def get_code(self, data):
-        return None
+        # Given an HTTP response, returns the status code
+        return int(data.split(' ')[1])
 
     def get_headers(self,data):
-        return None
+        # Given an HTTP response, returns the headers
+        return data.split('\r\n\r\n')[0]
 
     def get_body(self, data):
-        return None
+        # Given an HTTP response, returns the body
+        body_start = data.find('\r\n\r\n') + len('\r\n\r\n')
+        body = data[body_start:]
+        return body
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -91,9 +96,8 @@ class HTTPClient(object):
         self.sendall(data)
         response = self.recvall(self.socket)
         # We strip out the code and body, and send as an HTTPResponse.
-        code = int(response.split(' ')[1])
-        body_start = response.find('\r\n\r\n') + + len('\r\n\r\n')
-        body = response[body_start:]
+        code = self.get_code(response)
+        body = self.get_body(response)
         self.close()
         return HTTPResponse(code, body)
 
@@ -109,9 +113,8 @@ class HTTPClient(object):
         data = "POST %s HTTP/1.1\r\nHost: %s:%s\r\nContent-Type: application/x-222-form-urlencoded\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s" % (path, host, port, content_length, body)
         self.sendall(data)
         response = self.recvall(self.socket)
-        code = int(response.split(' ')[1])
-        body_start = response.find('\r\n\r\n') + len('\r\n\r\n')
-        body = response[body_start:]
+        code = self.get_code(response)
+        body = self.get_body(response)
         self.close()
         return HTTPResponse(code, body)
 
